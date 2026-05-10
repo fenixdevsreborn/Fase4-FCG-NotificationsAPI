@@ -51,12 +51,14 @@ jobs:
         uses: actions/cache@d4323d4df104b026a6aa633fdb11d772146be0bf # v4.2.2
         with:
           path: ~/.nuget/packages
-          key: ${{ runner.os }}-nuget-${{ hashFiles('**/*.csproj', '**/*.slnx') }}
+          key: ${{ runner.os }}-nuget-v2-${{ hashFiles('**/*.csproj', '**/*.slnx') }}
           restore-keys: |
-            ${{ runner.os }}-nuget-
+            ${{ runner.os }}-nuget-v2-
 
       - name: Restore
-        run: dotnet restore NotificationsAPI.slnx
+        run: |
+          dotnet restore NotificationsAPI.slnx
+          dotnet restore src/NotificationsAPI/NotificationsAPI.Worker.csproj
 
       - name: Audit NuGet packages
         run: |
@@ -67,7 +69,7 @@ jobs:
           fi
 
       - name: Build
-        run: dotnet build NotificationsAPI.slnx --configuration Release --no-restore
+        run: dotnet build NotificationsAPI.slnx --configuration Release
 
       - name: Test
         run: dotnet test NotificationsAPI.slnx --configuration Release --no-build
