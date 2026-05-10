@@ -1,6 +1,64 @@
-# NotificationsAPI
+# Fase4-FCG-NotificationsAPI
 
-API de notificação responsável por consumir eventos de outros microsserviços (como pagamentos aprovados e criação de usuário) e disparar notificações aos usuários conforme regras de negócio definidas na arquitetura de microsserviços. ([github.com](https://github.com/thefenixdevs/Fase2-NotificationsAPI/tree/Development))
+API de notificação responsável por consumir eventos de outros microsserviços (como pagamentos aprovados e criação de usuário) e disparar notificações aos usuários conforme regras de negócio definidas na arquitetura de microsserviços.
+
+> **Branch alvo da pipeline:** `master`.
+> **Registries:** AWS ECR (`notifications-api`) **e** Docker Hub (`<DOCKERHUB_USERNAME>/fcg-notifications-api`).
+> Pipeline: [`.github/workflows/notifications-api-ci-cd.yml`](.github/workflows/notifications-api-ci-cd.yml).
+
+---
+
+## ⚙️ Configuração obrigatória para automação AWS + Docker Hub
+
+> **Documentação master:** [`Fase4-FCG-Orchestrator/docs/MANUAL-STEPS.md`](../Fase4-FCG-Orchestrator/docs/MANUAL-STEPS.md). Resumo desta API:
+
+### 1. Pré-requisitos
+
+- Bootstrap AWS executado em `Fase4-FCG-Orchestrator/infra/terraform/bootstrap/`
+- Repositório Docker Hub `<DOCKERHUB_USERNAME>/fcg-notifications-api` criado
+- PAT Docker Hub Read & Write
+- PAT GitHub `contents:write` no `Fase4-FCG-Orchestrator`
+- Repositório ECR `notifications-api` (criado pelo Terraform principal)
+
+### 2. Branch padrão
+
+A pipeline só dispara em push para **`master`**.
+
+### 3. Secrets e Variables
+
+| Tipo | Nome | Descrição |
+|------|------|-----------|
+| Secret | `AWS_GITHUB_ROLE_ARN` | ARN da role IAM do bootstrap |
+| Secret | `DOCKERHUB_USERNAME` | Username Docker Hub |
+| Secret | `DOCKERHUB_TOKEN` | PAT Docker Hub (Read & Write) |
+| Secret | `GITOPS_TOKEN` | PAT GitHub com `contents:write` no `Fase4-FCG-Orchestrator` |
+| Variable | `GITOPS_REPOSITORY` | `<seu-org>/Fase4-FCG-Orchestrator` |
+
+```powershell
+$ORG="seu-org"; $REPO="Fase4-FCG-NotificationsAPI"
+gh secret   set AWS_GITHUB_ROLE_ARN --body "<role-arn>"     --repo "$ORG/$REPO"
+gh secret   set DOCKERHUB_USERNAME  --body "<dh-user>"      --repo "$ORG/$REPO"
+gh secret   set DOCKERHUB_TOKEN     --body "<dh-pat>"       --repo "$ORG/$REPO"
+gh secret   set GITOPS_TOKEN        --body "<gh-pat>"       --repo "$ORG/$REPO"
+gh variable set GITOPS_REPOSITORY   --body "$ORG/Fase4-FCG-Orchestrator" --repo "$ORG/$REPO"
+```
+
+### 4. O que a pipeline faz a cada push em `master`
+
+1. `dotnet build` + `dotnet test`
+2. Auditoria NuGet (falha em High/Critical)
+3. ECR push (`notifications-api:<sha>`) + Docker Hub push (`<user>/fcg-notifications-api:<sha>` e `:latest`)
+4. Trivy scan
+5. GitOps commit em `Fase4-FCG-Orchestrator` → Argo CD rolling update
+
+### 5. Primeiro disparo manual
+
+```powershell
+gh workflow run notifications-api-ci-cd.yml --repo "$ORG/Fase4-FCG-NotificationsAPI" --ref master
+```
+
+---
+
 
 ---
 
@@ -30,7 +88,7 @@ O **NotificationsAPI** é um microsserviço voltado ao processamento de eventos 
 * Notificações de **boas-vindas** após criação de usuário.
 * Outros eventos relevantes à experiência de usuário definidos na arquitetura.
 
-Esse serviço é essencial para garantir que os eventos publicados por outros microsserviços (como **PaymentsAPI** e **UsersAPI**) resultem em ações concretas de notificação. A integração é feita por meio de mensageria assíncrona (RabbitMQ/MassTransit). ([github.com](https://github.com/thefenixdevs/Fase2-NotificationsAPI/tree/Development))
+Esse serviço é essencial para garantir que os eventos publicados por outros microsserviços (como **PaymentsAPI** e **UsersAPI**) resultem em ações concretas de notificação. A integração é feita por meio de mensageria assíncrona (RabbitMQ/MassTransit).
 
 ---
 
@@ -64,7 +122,7 @@ Esse serviço é essencial para garantir que os eventos publicados por outros mi
 **Estrutura típica do repositório:**
 
 ```
-Fase2-NotificationsAPI
+Fase4-FCG-NotificationsAPI
 ├── src
 │   ├── NotificationsApi
 │   │   ├── Controllers
@@ -156,7 +214,7 @@ Configure as variáveis de ambiente dos componentes a seguir para rodar em qualq
 1. Clone o repositório:
 
    ```bash
-   git clone https://github.com/thefenixdevs/Fase2-NotificationsAPI.git
+   git clone https://github.com/<seu-org>/Fase4-FCG-NotificationsAPI.git
    ```
 2. Selecione a branch `Development` e ajuste as variáveis de ambiente localmente.
 3. Inicie dependências (RabbitMQ, brokers de notificação, serviços de e-mail/SMS simulados).
@@ -211,7 +269,7 @@ Lembre-se de criar **ConfigMaps** e **Secrets** antes de aplicar os deployments.
 
 ## 8. Observações de Qualidade para Avaliação Acadêmica
 
-Para garantir a documentação atende aos critérios da **Fase 2 da avaliação**, confira:
+Para garantir a documentação atende aos critérios da **Fase 4 do Tech Challenge**, confira:
 
 * Consolidação clara de **eventos consumidos e publicados**.
 * Separação entre **ConfigMaps e Secrets** no uso de variáveis de ambiente.
