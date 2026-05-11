@@ -3,23 +3,23 @@ WORKDIR /app
 
 # Copy solution and project files first for better layer caching
 COPY NotificationsAPI.slnx ./
-COPY Shared/Shared.csproj ./Shared/
-COPY Shared.Contracts/Shared.Contracts.csproj ./Shared.Contracts/
-COPY NotificationsAPI/NotificationsAPI.Worker.csproj ./NotificationsAPI/
-COPY NotificationsAPI.Application/NotificationsAPI.Application.csproj ./NotificationsAPI.Application/
-COPY NotificationsAPI.Domain/NotificationsAPI.Domain.csproj ./NotificationsAPI.Domain/
-COPY NotificationsAPI.Infrastructure/NotificationsAPI.Infrastructure.csproj ./NotificationsAPI.Infrastructure/
-COPY NotificationsAPI.Application.Tests/NotificationsAPI.Application.Tests.csproj ./NotificationsAPI.Application.Tests/
-COPY NotificationsAPI.Domain.Tests/NotificationsAPI.Domain.Tests.csproj ./NotificationsAPI.Domain.Tests/
+COPY src/Shared/Shared.csproj ./src/Shared/
+COPY src/Shared.Contracts/Shared.Contracts.csproj ./src/Shared.Contracts/
+COPY src/NotificationsAPI/NotificationsAPI.Worker.csproj ./src/NotificationsAPI/
+COPY src/NotificationsAPI.Application/NotificationsAPI.Application.csproj ./src/NotificationsAPI.Application/
+COPY src/NotificationsAPI.Domain/NotificationsAPI.Domain.csproj ./src/NotificationsAPI.Domain/
+COPY src/NotificationsAPI.Infrastructure/NotificationsAPI.Infrastructure.csproj ./src/NotificationsAPI.Infrastructure/
+COPY src/NotificationsAPI.Application.Tests/NotificationsAPI.Application.Tests.csproj ./src/NotificationsAPI.Application.Tests/
+COPY src/NotificationsAPI.Domain.Tests/NotificationsAPI.Domain.Tests.csproj ./src/NotificationsAPI.Domain.Tests/
 
 # Restore dependencies
-RUN dotnet restore "NotificationsAPI/NotificationsAPI.Worker.csproj"
+RUN dotnet restore "src/NotificationsAPI/NotificationsAPI.Worker.csproj"
 
 # Copy remaining source code
-COPY . .
+COPY src ./src
 
 # Build and publish
-RUN dotnet publish "NotificationsAPI/NotificationsAPI.Worker.csproj" -c Release -o /out --no-restore
+RUN dotnet publish "src/NotificationsAPI/NotificationsAPI.Worker.csproj" -c Release -o /out --no-restore
 
 FROM mcr.microsoft.com/dotnet/aspnet:10.0
 WORKDIR /app
